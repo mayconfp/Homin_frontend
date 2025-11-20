@@ -1,4 +1,4 @@
-import { Instagram } from 'lucide-react';
+import { Instagram } from "lucide-react";
 
 function Footer() {
   return (
@@ -11,9 +11,9 @@ function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 max-w-5xl mx-auto mb-16">
           <div className="bg-white rounded-3xl p-16 flex items-center justify-center shadow-2xl transform hover:scale-105 transition-all duration-300">
             <div className="text-center">
-              <img 
-                src="/src/assets/images/logo2.png" 
-                alt="HOMIN+ Logo" 
+              <img
+                src="/images/logo2.png"
+                alt="HOMIN+ Logo"
                 className="h-40 md:h-52 w-auto"
               />
             </div>
@@ -21,7 +21,9 @@ function Footer() {
 
           <div className="flex flex-col justify-center space-y-10">
             <div>
-              <h3 className="text-white text-2xl font-bold mb-6">Rede Social</h3>
+              <h3 className="text-white text-2xl font-bold mb-6">
+                Rede Social
+              </h3>
               <a
                 href="https://www.instagram.com/homiin.saude/"
                 target="_blank"
