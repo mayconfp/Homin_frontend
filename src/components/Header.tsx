@@ -24,17 +24,17 @@ function Header() {
     // If the header mounts and there's a token but no user, try restoring user from /auth/me
     (async () => {
       try {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem("access_token");
         if (token && !user && loginWithToken) {
           // Try direct fetch to /auth/me first to ensure network call appears and to debug
           try {
             // note: axios uses /api proxy; a raw fetch to /api/auth/me makes the request explicit
-            const resp = await fetch('/api/auth/me', {
+            const resp = await fetch("/api/auth/me", {
               headers: { Authorization: `Bearer ${token}` },
             });
-            console.debug('Direct /api/auth/me response status:', resp.status);
+            console.debug("Direct /api/auth/me response status:", resp.status);
             const json = await resp.json().catch(() => null);
-            console.debug('Direct /api/auth/me body:', json);
+            console.debug("Direct /api/auth/me body:", json);
             // If direct fetch succeeded, call loginWithToken to let AuthContext normalize and set user
             if (resp.ok && loginWithToken) {
               await loginWithToken(token);
@@ -43,12 +43,12 @@ function Header() {
               await loginWithToken(token);
             }
           } catch (innerErr) {
-            console.debug('Direct fetch to /api/auth/me failed:', innerErr);
+            console.debug("Direct fetch to /api/auth/me failed:", innerErr);
             await loginWithToken(token);
           }
         }
       } catch (e) {
-        console.debug('Could not restore user from token in Header:', e);
+        console.debug("Could not restore user from token in Header:", e);
       }
     })();
   }, [user]);
@@ -102,7 +102,7 @@ function Header() {
             {user ? (
               <div className="flex items-center">
                 <img
-                  src="/src/assets/images/logo.png"
+                  src="/images/logo.png"
                   alt="HOMIN+ Logo"
                   className="h-8 md:h-10 w-auto"
                 />

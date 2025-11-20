@@ -1,9 +1,19 @@
 import api from "./axios";
 
 export function socialLoginBackend() {
-  const next = `${window.location.origin}/auth/callback`;
+  let next = `${window.location.origin}/auth/callback`;
+  // Se tiver dois // na variável de ambiente, remover o último /
+  if (next.includes("//auth/callback")) {
+    next = next.replace("//auth/callback", "/auth/callback");
+  }
+
   const BACKEND_ORIGIN = import.meta.env.VITE_BACKEND_ORIGIN;
-  const url = `${BACKEND_ORIGIN}/auth/login?next=${encodeURIComponent(next)}`;
+
+  let url = `${BACKEND_ORIGIN}/auth/login?next=${encodeURIComponent(next)}`;
+
+  if (url.includes("//auth/login")) {
+    url = url.replace("//auth/login", "/auth/login");
+  }
 
   window.location.href = url;
 }
