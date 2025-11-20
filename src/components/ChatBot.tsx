@@ -1,9 +1,13 @@
 import { useState, useRef, KeyboardEvent, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { sendMessage } from '../services/chat';
 
 interface Message {
   text: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  origem?: string | null;
+  id?: string;
 }
 
 function ChatBot() {
@@ -15,38 +19,54 @@ function ChatBot() {
       timestamp: new Date()
     }
   ]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [conversaId, setConversaId] = useState<number | null>(null);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
+  const { user, loginWithGoogle } = useAuth();
+
+  const handleSendMessage = async () => {
+    setError(null);
     if (!inputMessage.trim()) return;
 
-    const userMessage: Message = {
-      text: inputMessage,
-      sender: 'user',
-      timestamp: new Date()
-    };
+    // require authenticated user
+    if (!user) {
+      // trigger social login flow
+      await loginWithGoogle();
+      return;
+    }
 
+    const text = inputMessage.trim();
+    const userMessage: Message = { text, sender: 'user', timestamp: new Date() };
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
+    setLoading(true);
 
-    setTimeout(() => {
-      const botResponses = [
-        'Entendi sua pergunta. Vou verificar como posso ajudar.',
-        'Ótima pergunta! Deixe-me pensar sobre isso.',
-        'Vou encaminhar sua dúvida para nossa equipe e retornarei em breve.',
-        'Obrigado pelo seu contato! Como posso te ajudar hoje?',
-        'Estou aqui para ajudar. Pode me fazer mais perguntas!'
-      ];
-      
+    try {
+      const res = await sendMessage(text, conversaId);
+      // if backend returned conversa_id, persist it to reuse for next messages
+      if (res.conversa_id && !conversaId) {
+        setConversaId(res.conversa_id);
+      }
+
       const botMessage: Message = {
-        text: botResponses[Math.floor(Math.random() * botResponses.length)],
+        text: res.response ?? 'Sem resposta do servidor.',
         sender: 'bot',
-        timestamp: new Date()
+        timestamp: new Date(),
+        origem: res.origem_contexto ?? null,
+        id: `srv-${Date.now()}`
       };
-
       setMessages(prev => [...prev, botMessage]);
-    }, 1000);
+    } catch (err: any) {
+      console.error('Erro ao enviar mensagem:', err);
+      setError(err?.response?.data?.detail ?? err?.message ?? 'Erro ao contatar servidor');
+      const failMsg: Message = { text: 'Erro ao obter resposta. Tente novamente.', sender: 'bot', timestamp: new Date() };
+      setMessages(prev => [...prev, failMsg]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -97,7 +117,7 @@ function ChatBot() {
           <div className="flex-1 p-5 overflow-y-auto bg-gray-50">
             {messages.map((message, index) => (
               <div 
-                key={index}
+                key={message.id ?? index}
                 className={`mb-3 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}
               >
                 <div 
@@ -106,6 +126,9 @@ function ChatBot() {
                     : 'bg-white text-gray-700 shadow-sm'}`}
                 >
                   <p className="text-sm">{message.text}</p>
+                  {message.origem && (
+                    <p className="text-xs opacity-60 mt-1">Origem: {message.origem}</p>
+                  )}
                   <p className="text-xs opacity-70 mt-1">
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -133,13 +156,14 @@ function ChatBot() {
               />
               <button
                 onClick={handleSendMessage}
-                disabled={!inputMessage.trim()}
+                disabled={!inputMessage.trim() || loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 aria-label="Enviar mensagem"
               >
-                Enviar
+                {loading ? 'Enviando...' : 'Enviar'}
               </button>
             </div>
+            {error && <div className="text-red-600 text-sm mt-2">{error}</div>}
           </div>
         </div>
       )}
